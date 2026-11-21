@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FormSaathi — फ़ॉर्म साथी | Kagaz ki photo do, form bhar jayega</title>
+<style>
+  :root{
+    --bg:#FFF8EE; --card:#FFFFFF; --ink:#263238; --muted:#6B7280;
+    --green:#1B7A43; --green-dark:#14532D; --green-soft:#E7F6EC;
+    --amber:#B45309; --amber-soft:#FEF3C7; --red:#DC2626; --red-soft:#FDECEC;
+    --line:#E7DDCB; --blue:#1D4ED8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,"Noto Sans Devanagari",sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.55; font-size:17px;}
+  .wrap{max-width:760px; margin:0 auto; padding:0 16px 64px;}
+
+  header.top{background:var(--green-dark); color:#fff; padding:22px 16px 18px; text-align:center;}
+  header.top h1{font-size:32px; letter-spacing:.3px;}
+  header.top h1 .hi{font-weight:700;}
+  header.top p{opacity:.92; font-size:16px; margin-top:4px;}
+  .demo-strip{background:#7C2D12; color:#FFE8D6; text-align:center; font-size:14.5px;
+    padding:8px 12px; font-weight:600;}
+
+  .steps{display:flex; gap:6px; justify-content:space-between; margin:20px 0 8px; flex-wrap:nowrap;}
+  .step-dot{flex:1; text-align:center; font-size:12.5px; color:var(--muted); font-weight:600;}
+  .step-dot .n{display:flex; align-items:center; justify-content:center; width:34px; height:34px;
+    margin:0 auto 4px; border-radius:50%; background:#EFE7D6; color:#8A7B5C; font-size:16px; font-weight:700;
+    transition:background .3s,color .3s, transform .3s;}
+  .step-dot.active .n{background:var(--green); color:#fff; transform:scale(1.12);}
+  .step-dot.done .n{background:var(--green-soft); color:var(--green);}
+
+  .screen{display:none; animation:fadeUp .35s ease both;}
+  .screen.on{display:block;}
+  @keyframes fadeUp{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:none;}}
+
+  .card{background:var(--card); border:1.5px solid var(--line); border-radius:16px;
+    padding:20px; margin:16px 0; box-shadow:0 2px 10px rgba(120,90,20,.06);}
+  h2.step-title{font-size:24px; margin:14px 0 2px;}
+  .step-sub{color:var(--muted); font-size:15.5px; margin-bottom:6px;}
+  .big{font-size:19px;}
+
+  button{font-family:inherit; cursor:pointer; border:none; border-radius:12px; font-weight:700;}
+  .btn-main{background:var(--green); color:#fff; font-size:19px; padding:15px 26px; width:100%;
+    min-height:56px; transition:transform .15s, background .2s;}
+  .btn-main:hover{background:#166638;} .btn-main:active{transform:scale(.98);}
+  .btn-main:disabled{background:#C9CED6; color:#6B7280; cursor:not-allowed;}
+  .btn-soft{background:var(--green-soft); color:var(--green-dark); font-size:16px; padding:12px 18px; min-height:50px;}
+  .btn-ghost{background:#fff; color:var(--ink); border:1.5px solid var(--line); font-size:15.5px; padding:11px 16px; min-height:48px;}
+  .btn-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;}
+  .btn-row .btn-main{flex:1;}
+
+  /* ---------- document cards ---------- */
+  .doc-head{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px;}
+  .doc-head h3{font-size:19px;}
+  .added-tag{display:none; background:var(--green-soft); color:var(--green-dark); font-weight:700;
+    font-size:14px; padding:5px 12px; border-radius:999px;}
+  .doc-card.added .added-tag{display:inline-block;}
+  .doc-card.added{border-color:var(--green);}
+
+  .paper{position:relative; border-radius:12px; overflow:hidden; border:1px solid #D8CFBB;
+    padding:16px; font-size:15px;}
+  .paper .wm{position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:44px; font-weight:800; color:rgba(180,30,30,.13); transform:rotate(-14deg);
+    letter-spacing:4px; pointer-events:none;}
+  .paper-aadhaar{background:linear-gradient(180deg,#FFF7E8 0%,#FFFFFF 30%,#F2FBF3 100%);}
+  .tri{height:8px; border-radius:4px; margin-bottom:12px;
+    background:linear-gradient(90deg,#F4913B 0 33%,#E8E8E8 33% 66%,#3E9B4F 66% 100%);}
+  .paper .rowline{display:flex; gap:12px;}
+  .face{width:74px; height:92px; flex:none; border:1.5px solid #B9C4CE; border-radius:8px;
+    background:#EDF2F6; display:flex; align-items:flex-end; justify-content:center; overflow:hidden;}
+  .paper dl{display:grid; grid-template-columns:auto 1fr; gap:3px 12px;}
+  .paper dt{color:#5B6B76; font-weight:600; white-space:nowrap;}
+  .paper dd{font-weight:600;}
+  .paper-marksheet{background:#FFFDF5;}
+  .paper-marksheet table{width:100%; border-collapse:collapse; margin-top:10px; font-size:14.5px;}
+  .paper-marksheet th,.paper-marksheet td{border:1px solid #D8CFBB; padding:5px 9px; text-align:left;}
+  .paper-marksheet th{background:#FBF3DC;}
+  .paper-passbook{background:linear-gradient(160deg,#EFF6FF,#FFFFFF 55%);}
+  .bank-band{background:var(--blue); color:#fff; border-radius:8px; padding:7px 12px; font-weight:700; margin-bottom:12px;}
+  .smudge{background:repeating-linear-gradient(90deg,#9AA5B1 0 6px,#C6CDD5 6px 11px); color:transparent;
+    border-radius:4px; padding:0 6px; user-select:none;}
+  .own-photo{display:none; margin-top:12px;}
+  .own-photo img{max-width:100%; max-height:220px; border-radius:10px; border:1px solid var(--line);}
+  .doc-card.has-own .own-photo{display:block;}
+  .file-label{display:inline-block;}
+  input[type=file]{display:none;}
+  .note{font-size:14.5px; color:var(--muted); margin-top:10px;}
+  .note b{color:var(--ink);}
+
+  /* ---------- reading / results ---------- */
+  .read-row{display:flex; align-items:center; gap:12px; padding:12px 4px; border-bottom:1px dashed var(--line); font-size:17.5px; font-weight:600;}
+  .read-row .st{margin-left:auto; font-size:15px; color:var(--muted); font-weight:600; min-width:96px; text-align:right;}
+  .read-row.reading .st{color:var(--amber);}
+  .read-row.done .st{color:var(--green);}
+  .pulse{display:inline-block; animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:.35;} 50%{opacity:1;}}
+
+  table.fields{width:100%; border-collapse:collapse; margin-top:8px;}
+  table.fields th, table.fields td{padding:10px 8px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top;}
+  table.fields th{font-size:13.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px;}
+  td.f-label{font-weight:700; width:32%;}
+  td.f-label small{display:block; color:var(--muted); font-weight:500;}
+  td.f-val{font-weight:600;}
+  .src{display:block; font-size:13.5px; color:var(--muted); font-weight:500; margin-top:2px;}
+  .conf{font-size:13.5px; font-weight:800; padding:4px 10px; border-radius:999px; white-space:nowrap;}
+  .conf.high{background:var(--green-soft); color:var(--green-dark);}
+  .conf.low{background:var(--amber-soft); color:var(--amber);}
+  .conf.miss{background:var(--red-soft); color:var(--red);}
+  tr.need td{background:#FFFBEB;}
+
+  /* ---------- questions ---------- */
+  .q-count{font-weight:700; color:var(--amber); font-size:15px; letter-spacing:.3px;}
+  .q-title{font-size:26px; margin:8px 0 2px;}
+  .q-title-en{color:var(--muted); font-size:17px; margin-bottom:14px;}
+  .chips{display:flex; flex-wrap:wrap; gap:10px; margin:8px 0 6px;}
+  .chip{background:#fff; border:2px solid var(--line); border-radius:999px; padding:12px 20px;
+    font-size:17px; font-weight:700; min-height:50px; transition:border-color .15s, background .15s;}
+  .chip small{display:block; font-size:12.5px; color:var(--muted); font-weight:600;}
+  .chip.sel{border-color:var(--green); background:var(--green-soft);}
+  .q-input{width:100%; font-size:20px; padding:14px 16px; border:2px solid var(--line); border-radius:12px;
+    font-family:inherit; font-weight:600;}
+  .q-input:focus{outline:none; border-color:var(--green);}
+  .q-error{display:none; background:var(--red-soft); color:var(--red); font-weight:600;
+    padding:10px 14px; border-radius:10px; margin-top:12px; font-size:15.5px;}
+  .q-error.on{display:block;}
+  .mic-btn{display:none; align-items:center; gap:8px; background:#FFF; border:2px solid var(--line);
+    border-radius:999px; padding:10px 18px; font-size:16px; font-weight:700; min-height:50px;}
+  .mic-btn.show{display:inline-flex;}
+  .mic-btn.listening{border-color:var(--red); color:var(--red);}
+
+  /* ---------- preview form ---------- */
+  .form-paper{position:relative; background:#fff; border:2px solid #CBBFA3; border-radius:8px; padding:24px 20px; overflow:hidden;}
+  .form-paper .wm{position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:64px; font-weight:800; color:rgba(180,30,30,.10); transform:rotate(-16deg); letter-spacing:6px; pointer-events:none;}
+  .form-paper h3{text-align:center; font-size:21px;}
+  .form-paper .form-sub{text-align:center; color:var(--muted); font-size:14px; margin-bottom:16px;}
+  .prow{display:flex; gap:10px; align-items:flex-start; padding:10px 0; border-bottom:1px dashed #D8CFBB;}
+  .prow .p-label{width:34%; font-weight:700; font-size:15.5px;}
+  .prow .p-label small{display:block; color:var(--muted); font-weight:500; font-size:13px;}
+  .prow .p-val{flex:1; font-weight:600; font-size:16.5px;}
+  .prow .p-val .src{margin-top:1px;}
+  .edit-btn{background:var(--green-soft); color:var(--green-dark); font-size:13.5px; padding:7px 12px; border-radius:8px; flex:none;}
+  .prow input{width:100%; font-size:16.5px; padding:9px 11px; border:2px solid var(--green); border-radius:9px; font-family:inherit; font-weight:600;}
+  .save-btn{background:var(--green); color:#fff; font-size:14px; padding:9px 14px; border-radius:9px; flex:none;}
+
+  /* ---------- stop gate ---------- */
+  .gate{border:3px solid var(--red); background:var(--red-soft); border-radius:18px; padding:26px 22px; text-align:center;}
+  .gate .stop-sign{width:92px; height:92px; margin:0 auto 12px; border-radius:50%; background:var(--red);
+    color:#fff; display:flex; align-items:center; justify-content:center; font-size:21px; font-weight:800;
+    border:6px solid #fff; box-shadow:0 0 0 3px var(--red);}
+  .gate h2{font-size:27px; color:#7F1D1D;}
+  .gate p{font-size:18px; margin:8px auto 4px; max-width:520px;}
+  .btn-ok{background:var(--green); color:#fff; font-size:21px; padding:17px 30px; min-height:62px; width:100%; margin-top:16px;}
+  .btn-ok:hover{background:#166638;}
+  .btn-back{width:100%; margin-top:10px; background:#fff; border:2px solid var(--ink); color:var(--ink);
+    font-size:17px; padding:14px; min-height:54px;}
+
+  /* ---------- done ---------- */
+  .done-badge{width:96px; height:96px; margin:6px auto 10px; border-radius:50%; background:var(--green-soft);
+    color:var(--green); display:flex; align-items:center; justify-content:center; font-size:52px; font-weight:800;
+    animation:pop .45s ease both;}
+  @keyframes pop{from{transform:scale(.5); opacity:0;} to{transform:scale(1); opacity:1;}}
+  .center{text-align:center;}
+
+  footer{margin-top:34px; text-align:center; color:var(--muted); font-size:14px;}
+  footer b{color:var(--ink);}
+
+  @media (max-width:560px){
+    .paper dl{grid-template-columns:1fr;}
+    .paper dt{margin-top:6px;}
+    td.f-label{width:40%;}
+    .prow{flex-wrap:wrap;}
+    .prow .p-label{width:100%;}
+    header.top h1{font-size:26px;}
+    .q-title{font-size:22px;}
+  }
+  @media print{
+    header.top,.demo-strip,.steps,footer,.screen{display:none !important;}
+    #screen-done{display:block !important;}
+    .no-print{display:none !important;}
+    body{background:#fff;}
+    .wrap{padding:0;}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1>FormSaathi <span class="hi">· फ़ॉर्म साथी</span></h1>
+  <p>Kagaz ki photo do, form hum bhar denge.<br>Give photos of your documents — we fill the form for you.</p>
+</header>
+<div class="demo-strip">DEMO — Ye sirf dikhane ke liye hai. Koi bhi form asal me kahin bheja nahi jata. · This is a demo. Nothing is really sent anywhere.</div>
+
+<div class="wrap" id="app">
+
+  <nav class="steps" id="steps-bar" aria-label="Steps">
+    <div class="step-dot" data-step="1"><span class="n">1</span>Kagaz<br>Documents</div>
+    <div class="step-dot" data-step="2"><span class="n">2</span>Padhai<br>Reading</div>
+    <div class="step-dot" data-step="3"><span class="n">3</span>Sawal<br>Questions</div>
+    <div class="step-dot" data-step="4"><span class="n">4</span>Form<br>Preview</div>
+    <div class="step-dot" data-step="5"><span class="n">5</span>Ruko<br>Your OK</div>
+    <div class="step-dot" data-step="6"><span class="n">6</span>Ho gaya<br>Done</div>
+  </nav>
+
+  <!-- ============ STEP 1 : DOCUMENTS ============ -->
+  <section class="screen" id="screen-docs">
+    <h2 class="step-title">Step 1 · Apne kagaz ki photo do</h2>
+    <p class="step-sub">Add photos of your documents. Neeche teen sample kagaz bane hue hain — pehle unhi se try karo.</p>
+
+    <div class="card doc-card" id="doc-aadhaar">
+      <div class="doc-head"><h3>1. Aadhaar card <span style="color:var(--muted); font-size:14px;">(sample)</span></h3><span class="added-tag">✓ Photo add ho gayi</span></div>
+      <div class="paper paper-aadhaar">
+        <div class="tri"></div>
+        <div class="wm">SAMPLE</div>
+        <div class="rowline">
+          <div class="face" aria-hidden="true">
+            <svg width="52" height="62" viewBox="0 0 52 62"><circle cx="26" cy="20" r="11" fill="#9FB3C8"/><path d="M4 62c2-14 11-20 22-20s20 6 22 20z" fill="#9FB3C8"/></svg>
+          </div>
+          <dl>
+            <dt>Name</dt><dd>Aarav Kumar Sharma</dd>
+            <dt>Father's Name</dt><dd>Ramesh Kumar Sharma</dd>
+            <dt>Date of Birth</dt><dd>14/03/2011</dd>
+            <dt>Address</dt><dd>H. No. 42, MG Road,<br>Patna, Bihar — 800001</dd>
+            <dt>Aadhaar No.</dt><dd>1234 5678 9012</dd>
+          </dl>
+        </div>
+      </div>
+      <div class="own-photo"><p class="note" style="margin:0 0 6px;">Aapki photo:</p><img alt="Your Aadhaar photo"></div>
+      <div class="btn-row">
+        <button class="btn-soft" data-add-sample="aadhaar">📷 Sample photo add karo</button>
+        <label class="btn-ghost file-label">Apni photo chuno<input type="file" accept="image/*" data-upload="aadhaar"></label>
+      </div>
+      <p class="note">Ye asli Aadhaar <b>nahi</b> hai — sirf sample hai, saari jaankari nakli hai.</p>
+    </div>
+
+    <div class="card doc-card" id="doc-marksheet">
+      <div class="doc-head"><h3>2. Marksheet <span style="color:var(--muted); font-size:14px;">(sample)</span></h3><span class="added-tag">✓ Photo add ho gayi</span></div>
+      <div class="paper paper-marksheet">
+        <div class="wm">SAMPLE</div>
+        <p style="font-weight:800; text-align:center;">SAMPLE MARKSHEET — Board of School Education (Demo)</p>
+        <dl style="margin-top:10px;">
+          <dt>Student Name</dt><dd>Aarav Kumar Sharma</dd>
+          <dt>Father's Name</dt><dd>Ramesh Kumar Sharma</dd>
+          <dt>School</dt><dd>Govt. Higher Secondary School, Patna</dd>
+          <dt>Class</dt><dd>8</dd>
+          <dt>Roll No</dt><dd>23</dd>
+        </dl>
+        <table>
+          <tr><th>Subject</th><th>Marks</th></tr>
+          <tr><td>Hindi</td><td>78 / 100</td></tr>
+          <tr><td>English</td><td>71 / 100</td></tr>
+          <tr><td>Maths</td><td>84 / 100</td></tr>
+          <tr><td>Science</td><td>80 / 100</td></tr>
+          <tr><td>Result</td><td><b>Pass</b></td></tr>
+        </table>
+      </div>
+      <div class="own-photo"><p class="note" style="margin:0 0 6px;">Aapki photo:</p><img alt="Your marksheet photo"></div>
+      <div class="btn-row">
+        <button class="btn-soft" data-add-sample="marksheet">📷 Sample photo add karo</button>
+        <label class="btn-ghost file-label">Apni photo chuno<input type="file" accept="image/*" data-upload="marksheet"></label>
+      </div>
+      <p class="note">Ye bhi sample hai — number aur naam sab nakli hain.</p>
+    </div>
+
+    <div class="card doc-card" id="doc-passbook">
+      <div class="doc-head"><h3>3. Bank passbook <span style="color:var(--muted); font-size:14px;">(sample)</span></h3><span class="added-tag">✓ Photo add ho gayi</span></div>
+      <div class="paper paper-passbook">
+        <div class="wm">SAMPLE</div>
+        <div class="bank-band">SAMPLE BANK — Passbook (Demo)</div>
+        <dl>
+          <dt>Account Holder</dt><dd>Aarav Kumar Sharma</dd>
+          <dt>Account No</dt><dd>50100234567890</dd>
+          <dt>Branch</dt><dd>Patna Main Branch</dd>
+          <dt>IFSC</dt><dd><span class="smudge">BANK0••••••</span> <span style="color:var(--amber); font-weight:700;">(photo me aadha mita hua)</span></dd>
+        </dl>
+      </div>
+      <div class="own-photo"><p class="note" style="margin:0 0 6px;">Aapki photo:</p><img alt="Your passbook photo"></div>
+      <div class="btn-row">
+        <button class="btn-soft" data-add-sample="passbook">📷 Sample photo add karo</button>
+        <label class="btn-ghost file-label">Apni photo chuno<input type="file" accept="image/*" data-upload="passbook"></label>
+      </div>
+      <p class="note">Dekho — passbook par IFSC code aadha mita hua hai. Isi liye aage chal kar hum ye tumse <b>poochhenge</b>.</p>
+    </div>
+
+    <div class="card">
+      <p class="big" id="docs-count"><b>0 / 3</b> kagaz add hue</p>
+      <div class="btn-row"><button class="btn-main" id="btn-to-reading" disabled>Aage badho — kagaz padho →</button></div>
+      <p class="note"><b>Demo me padhai kaise hoti hai?</b> Photo ke asli akshar nahi padhe jate. Is page ka ek chhota program sample kagaz par chhape shabdon ko padh kar form bharta hai. Asli app me ye kaam camera ki padhai (OCR) se hoga.<br>
+      <i>How reading works in this demo: a small program on this page reads the words printed on the sample documents. It does not read a real photo. A real app would use camera reading (OCR).</i></p>
+    </div>
+  </section>
+
+  <!-- ============ STEP 2 : READING ============ -->
+  <section class="screen" id="screen-reading">
+    <h2 class="step-title">Step 2 · Kagaz padhe ja rahe hain</h2>
+    <p class="step-sub">The agent is reading your documents. Har field ke saath likha hai — kahan se mila, aur kitna pakka hai.</p>
+    <div class="card">
+      <div id="reading-list">
+        <div class="read-row" data-read="aadhaar"><span>📄 Aadhaar card</span><span class="st">—</span></div>
+        <div class="read-row" data-read="marksheet"><span>📄 Marksheet</span><span class="st">—</span></div>
+        <div class="read-row" data-read="passbook"><span>📄 Bank passbook</span><span class="st">—</span></div>
+      </div>
+      <div id="extract-results" style="display:none;">
+        <h3 style="margin:18px 0 4px; font-size:20px;">Ye jaankari mili · What we found</h3>
+        <table class="fields"><thead><tr><th>Field</th><th>Value</th><th>Pakka?</th></tr></thead>
+        <tbody id="extract-body"></tbody></table>
+        <p class="note">Jo field <b>nahi mila</b> ya <b>pakka nahi</b> hai, sirf wahi aage poochha jayega. Baaki kuch nahi poochhenge.</p>
+        <div class="btn-row"><button class="btn-main" id="btn-to-questions">Aage badho →</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STEP 3 : QUESTIONS ============ -->
+  <section class="screen" id="screen-questions">
+    <h2 class="step-title">Step 3 · Bas kuch chhote sawal</h2>
+    <p class="step-sub">Sirf wahi poochh rahe hain jo kagaz me nahi mila. Ek-ek karke.</p>
+    <div class="card">
+      <p class="q-count" id="q-progress">Sawal 1 / 2 · Question 1 of 2</p>
+      <h3 class="q-title" id="q-title-hi"></h3>
+      <p class="q-title-en" id="q-title-en"></p>
+      <div class="chips" id="q-options"></div>
+      <input class="q-input" id="q-input" type="text" autocomplete="off">
+      <p class="note" id="q-hint"></p>
+      <div class="btn-row">
+        <button class="mic-btn" id="btn-mic" type="button">🎤 Bol kar batao</button>
+      </div>
+      <div class="q-error" id="q-error"></div>
+      <div class="btn-row"><button class="btn-main" id="btn-q-next">Jawab do — aage badho →</button></div>
+    </div>
+  </section>
+
+  <!-- ============ STEP 4 : PREVIEW ============ -->
+  <section class="screen" id="screen-preview">
+    <h2 class="step-title">Step 4 · Bhara hua form dekho</h2>
+    <p class="step-sub">Check the filled form. Kuch galat lage to usi line par <b>Badlo</b> dabakar theek kar do.</p>
+    <div class="form-paper">
+      <div class="wm">DEMO</div>
+      <h3>छात्रवृत्ति आवेदन पत्र</h3>
+      <p class="form-sub">Scholarship Application Form — DEMO · Sirf dikhane ke liye, asal form nahi hai</p>
+      <div id="preview-form"></div>
+    </div>
+    <div class="btn-row"><button class="btn-main" id="btn-to-gate">Sab dekha liya — aage badho →</button></div>
+  </section>
+
+  <!-- ============ STEP 5 : STOP GATE ============ -->
+  <section class="screen" id="screen-gate">
+    <h2 class="step-title">Step 5 · Aakhri rukawat — tumhara OK</h2>
+    <p class="step-sub">This stop is the main safety of FormSaathi. Agent khud kuch nahi bhejta.</p>
+    <div class="gate">
+      <div class="stop-sign">STOP</div>
+      <h2>Ruko! Pehle sab check karo.</h2>
+      <p><b>Check everything.</b> Naam, tareekh, khata number — sab theek hai?</p>
+      <p><b>Nothing is sent until you press OK.</b><br>Tumhare OK dabane se pehle kuch bhi kahin nahi jata.</p>
+      <button class="btn-ok" id="btn-approve">✓ Sab sahi hai — OK, bhej do</button>
+      <button class="btn-back" id="btn-back-fix">← Wapas jao, kuch theek karna hai</button>
+    </div>
+  </section>
+
+  <!-- ============ STEP 6 : DONE ============ -->
+  <section class="screen" id="screen-done">
+    <div class="center">
+      <div class="done-badge">✓</div>
+      <h2 class="step-title">Ho gaya! Form taiyaar hai।</h2>
+      <p class="step-sub">Your form is ready. Neeche uski ek copy hai — print ya PDF bana sakte ho.</p>
+    </div>
+    <div class="form-paper" id="summary-doc">
+      <div class="wm">DEMO</div>
+      <h3>छात्रवृत्ति आवेदन पत्र</h3>
+      <p class="form-sub">Scholarship Application Form — DEMO COPY</p>
+      <div id="summary-form"></div>
+      <p class="note" style="margin-top:16px; text-align:center;"><b>Ye sirf demo hai. Kuch bhi asal me kahin bheja nahi gaya.</b><br>This is only a demo. Nothing was really sent anywhere.</p>
+    </div>
+    <div class="btn-row no-print">
+      <button class="btn-soft" id="btn-print">🖨 Print / PDF banao</button>
+      <button class="btn-ghost" id="btn-restart">↺ Phir se shuru karo</button>
+    </div>
+  </section>
+
+  <footer>
+    <p><b>FormSaathi</b> — un logo ke liye jinhe form bharne me dar lagta hai, jo kam padhe-likhe hain, ya jo buzurg hain.<br>
+    For people who fear forms, read less, or are elderly. Kagaz dikhao, sawal ke jawab do, aur OK tumhare haath me.</p>
+  </footer>
+</div>
+
+<script>
+"use strict";
+/* =====================================================================
+   FormSaathi — demo build.
+   Extraction is done by a small text parser (parseDocument) that reads
+   the words printed on the built-in SAMPLE documents. It does NOT read
+   real photos (no OCR). A real OCR / vision reader can be put behind
+   the same extractFromDocument(doc) function later.
+   ===================================================================== */
+
+/* ---------- The sample documents: the words printed on each card ---------- */
+const SAMPLE_DOCS = {
+  aadhaar: {
+    id: "aadhaar",
+    nameHi: "Aadhaar card", nameEn: "Aadhaar card",
+    sourceHi: "Aadhaar card photo se", sourceEn: "from Aadhaar card photo",
+    lines: [
+      "Name: Aarav Kumar Sharma",
+      "Father's Name: Ramesh Kumar Sharma",
+      "Date of Birth: 14/03/2011",
+      "Address:",
+      "H. No. 42, MG Road,",
+      "Patna, Bihar - 800001",
+      "Aadhaar No: 1234 5678 9012"
+    ]
+  },
+  marksheet: {
+    id: "marksheet",
+    nameHi: "Marksheet", nameEn: "Marksheet",
+    sourceHi: "Marksheet photo se", sourceEn: "from Marksheet photo",
+    lines: [
+      "SAMPLE MARKSHEET - Board of School Education (Demo)",
+      "Student Name: Aarav Kumar Sharma",
+      "Father's Name: Ramesh Kumar Sharma",
+      "School: Govt. Higher Secondary School, Patna",
+      "Class: 8",
+      "Roll No: 23",
+      "Hindi 78/100",
+      "English 71/100",
+      "Maths 84/100",
+      "Science 80/100",
+      "Result: Pass"
+    ]
+  },
+  passbook: {
+    id: "passbook",
+    nameHi: "Bank passbook", nameEn: "Bank passbook",
+    sourceHi: "Passbook photo se", sourceEn: "from Passbook photo",
+    lines: [
+      "SAMPLE BANK - Passbook (Demo)",
+      "Account Holder: Aarav Kumar Sharma",
+      "Account No: 50100234567890",
+      "Branch: Patna Main Branch",
+      "IFSC: BANK0••••••"
+    ]
+  }
+};
+
+/* ---------- helpers ---------- */
+function lineAfter(lines, labelRe) {
+  for (const ln of lines) {
+    const m = ln.match(labelRe);
+    if (m) return m[1].trim();
+  }
+  return null;
+}
+function found(value, extra) {
+  return Object.assign({ value: value, confidence: "high", status: "found" }, extra || {});
+}
+function notFound() { return { value: null, confidence: "miss", status: "missing" }; }
+
+/* ---------- the parser: reads one document's printed words ---------- */
+function parseAadhaar(lines) {
+  const out = {};
+  const name = lineAfter(lines, /^Name:\s*(.+)$/);
+  if (name) out.name = found(name);
+  const father = lineAfter(lines, /^Father's Name:\s*(.+)$/);
+  if (father) out.fatherName = found(father);
+  const dob = lineAfter(lines, /(\d{2}\/\d{2}\/\d{4})/);
+  if (dob) out.dob = found(dob);
+  // Address = the lines after "Address:" up to the line with the PIN code
+  const ai = lines.findIndex(l => /^Address:/.test(l));
+  if (ai >= 0) {
+    const parts = [];
+    for (let i = ai + 1; i < lines.length; i++) {
+      parts.push(lines[i].replace(/\s*-\s*/, " — "));
+      if (/\d{6}/.test(lines[i])) break;
+    }
+    if (parts.length) out.address = found(parts.join(" "));
+  }
+  const aad = lineAfter(lines, /(\d{4})\s(\d{4})\s(\d{4})/);
+  if (aad) {
+    const groups = lines.join(" ").match(/(\d{4})\s(\d{4})\s(\d{4})/);
+    out.aadhaarLast4 = found(groups[3]);
+  }
+  return out;
+}
+
+function parseMarksheet(lines) {
+  const out = {};
+  const school = lineAfter(lines, /^School:\s*(.+)$/);
+  if (school) out.school = found(school);
+  const cls = lineAfter(lines, /^Class:\s*(\d{1,2})$/);
+  if (cls) out.classLevel = found("Class " + cls);
+  return out;
+}
+
+function parsePassbook(lines) {
+  const out = {};
+  const acc = lineAfter(lines, /^Account No:\s*(\d{9,18})$/);
+  if (acc) out.bankAccount = found(acc);
+  // IFSC: a full code is 4 letters + 0 + 6 letters/digits. On the sample
+  // passbook it is half rubbed off (has • marks), so it stays "unclear".
+  const raw = lineAfter(lines, /^IFSC:\s*(.+)$/);
+  if (raw) {
+    if (/^[A-Z]{4}0[A-Z0-9]{6}$/.test(raw)) {
+      out.bankIfsc = found(raw);
+    } else {
+      out.bankIfsc = { value: raw, confidence: "low", status: "unclear" };
+    }
+  }
+  return out;
+}
+
+const PARSERS = { aadhaar: parseAadhaar, marksheet: parseMarksheet, passbook: parsePassbook };
+
+/* The one interface for reading a document. Today: the text parser above.
+   A real OCR/vision reader would replace the inside of this function. */
+function extractFromDocument(doc) {
+  const parser = PARSERS[doc.id];
+  const fields = parser ? parser(doc.lines.slice()) : {};
+  for (const k of Object.keys(fields)) {
+    fields[k].sourceHi = doc.sourceHi;
+    fields[k].sourceEn = doc.sourceEn;
+  }
+  return fields;
+}
+
+/* ---------- the demo scholarship form: field order and labels ---------- */
+const FORM_FIELDS = [
+  { key: "name",         labelHi: "Poora naam",            labelEn: "Full name" },
+  { key: "fatherName",   labelHi: "Pita ka naam",          labelEn: "Father's name" },
+  { key: "dob",          labelHi: "Janm tithi",            labelEn: "Date of birth" },
+  { key: "address",      labelHi: "Pata",                  labelEn: "Home address" },
+  { key: "category",     labelHi: "Category",              labelEn: "Category" },
+  { key: "school",       labelHi: "School ka naam",        labelEn: "School name" },
+  { key: "classLevel",   labelHi: "Class",                 labelEn: "Class" },
+  { key: "bankAccount",  labelHi: "Bank khata number",     labelEn: "Bank account number" },
+  { key: "bankIfsc",     labelHi: "Bank IFSC code",        labelEn: "Bank IFSC code" },
+  { key: "aadhaarLast4", labelHi: "Aadhaar ke aakhiri 4 ank", labelEn: "Aadhaar last 4 digits" }
+];
+
+/* Merge the fields read from all added documents into form order. */
+function extractAll(docIds) {
+  const merged = {};
+  for (const id of docIds) {
+    const doc = SAMPLE_DOCS[id];
+    if (!doc) continue;
+    const fields = extractFromDocument(doc);
+    for (const k of Object.keys(fields)) {
+      if (!merged[k] || merged[k].status !== "found") merged[k] = fields[k];
+    }
+  }
+  return FORM_FIELDS.map(f => {
+    const got = merged[f.key];
+    if (got) return Object.assign({}, f, got);
+    return Object.assign({}, f, notFound(), { sourceHi: "", sourceEn: "" });
+  });
+}
+
+/* Exposed for the automated tests (and for a future OCR swap-in). */
+const FormSaathiCore = { SAMPLE_DOCS, FORM_FIELDS, parseAadhaar, parseMarksheet, parsePassbook, extractFromDocument, extractAll };
+if (typeof window !== "undefined") window.FormSaathi = FormSaathiCore;
+
+/* ---------- the only two things the demo asks (whatever was not found) ---------- */
+const QUESTIONS = {
+  category: {
+    titleHi: "Aapki category kya hai?",
+    titleEn: "What is your category?",
+    hint: "Kagaz par ye nahi mila, isliye poochh rahe hain. Neeche se chuno, ya likh do, ya bol kar bata do.",
+    inputKind: "chips",
+    inputPlaceholder: "Ya yahan likh do…",
+    options: [
+      { value: "General", hi: "General", en: "General" },
+      { value: "OBC", hi: "OBC", en: "Other Backward Class" },
+      { value: "SC", hi: "SC", en: "Scheduled Caste" },
+      { value: "ST", hi: "ST", en: "Scheduled Tribe" },
+      { value: "EWS", hi: "EWS", en: "Economically Weaker Section" }
+    ],
+    validate: v => (v && v.trim()) ? null : "Ek category chuno, ya neeche likh do."
+  },
+  bankIfsc: {
+    titleHi: "Aapke bank ka IFSC code kya hai?",
+    titleEn: "What is your bank's IFSC code?",
+    hint: "Photo me passbook ka IFSC aadha mita hua tha, isliye poochh rahe hain. Ye passbook ke pehle page par hota hai. Kul 11 akshar hote hain — jaise BANK0123456.",
+    inputKind: "text",
+    inputPlaceholder: "Jaise: BANK0123456",
+    validate: v => /^[A-Z]{4}0[A-Z0-9]{6}$/.test((v || "").trim().toUpperCase())
+      ? null
+      : "Ye IFSC jaisa nahi lag raha. 11 akshar hone chahiye — pehle 4 akshar, phir 0, phir 6 akshar ya ank. Passbook par phir se dekho."
+  }
+};
+function questionFor(field) {
+  if (QUESTIONS[field.key]) return QUESTIONS[field.key];
+  return {
+    titleHi: field.labelHi + " kya hai?",
+    titleEn: "What is the " + field.labelEn.toLowerCase() + "?",
+    hint: "Ye kagaz me nahi mila, isliye poochh rahe hain.",
+    inputKind: "text", inputPlaceholder: "",
+    validate: v => (v && v.trim()) ? null : "Kuch likho, phir aage badho."
+  };
+}
+
+/* ---------- app state ---------- */
+const state = {
+  added: {},       // docId -> "sample" | "own"
+  fields: [],      // extracted fields, in form order
+  questions: [],   // fields that still need an answer
+  qIndex: 0,
+  answers: {},     // fieldKey -> value the user gave
+  edits: {},       // fieldKey -> value the user fixed in the preview
+  editingKey: null,
+  currentQ: null
+};
+
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function finalValue(field) {
+  if (state.edits[field.key] != null) return state.edits[field.key];
+  if (state.answers[field.key] != null) return state.answers[field.key];
+  return field.value;
+}
+function sourceText(field) {
+  if (state.edits[field.key] != null) return "Aapne badla · You edited this";
+  if (state.answers[field.key] != null) return "Aapne bataya · You told us";
+  if (field.sourceHi) return field.sourceHi + " · " + field.sourceEn;
+  return "";
+}
+
+/* ---------- screens ---------- */
+const SCREEN_IDS = { 1: "screen-docs", 2: "screen-reading", 3: "screen-questions", 4: "screen-preview", 5: "screen-gate", 6: "screen-done" };
+function setStep(n) {
+  for (const k of Object.keys(SCREEN_IDS)) {
+    document.getElementById(SCREEN_IDS[k]).classList.toggle("on", Number(k) === n);
+  }
+  document.querySelectorAll(".step-dot").forEach(d => {
+    const s = Number(d.dataset.step);
+    d.classList.toggle("active", s === n);
+    d.classList.toggle("done", s < n);
+  });
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+/* ---------- step 1: documents ---------- */
+function markAdded(docId, kind) {
+  state.added[docId] = kind;
+  const card = document.getElementById("doc-" + docId);
+  card.classList.add("added");
+  if (kind === "own") card.classList.add("has-own");
+  const count = Object.keys(state.added).length;
+  document.getElementById("docs-count").innerHTML = "<b>" + count + " / 3</b> kagaz add hue";
+  document.getElementById("btn-to-reading").disabled = count < 3;
+}
+
+/* ---------- step 2: reading + results ---------- */
+function startReading() {
+  setStep(2);
+  document.getElementById("extract-results").style.display = "none";
+  const ids = Object.keys(SAMPLE_DOCS).filter(id => state.added[id]);
+  ids.forEach(id => {
+    const row = document.querySelector('[data-read="' + id + '"]');
+    row.className = "read-row";
+    row.querySelector(".st").textContent = "—";
+  });
+  ids.forEach((id, i) => {
+    const row = document.querySelector('[data-read="' + id + '"]');
+    const st = row.querySelector(".st");
+    setTimeout(() => { row.classList.add("reading"); st.innerHTML = 'padh raha hai <span class="pulse">●</span>'; }, 350 + i * 750);
+    setTimeout(() => { row.classList.remove("reading"); row.classList.add("done"); st.textContent = "✓ padh liya"; }, 350 + (i + 1) * 750);
+  });
+  setTimeout(() => {
+    state.fields = extractAll(ids);
+    renderExtractResults();
+    document.getElementById("extract-results").style.display = "block";
+  }, 350 + ids.length * 750 + 250);
+}
+
+function confChip(field) {
+  if (field.status === "found") return '<span class="conf high">✓ Pakka · Sure</span>';
+  if (field.status === "unclear") return '<span class="conf low">Pakka nahi · Not sure</span>';
+  return '<span class="conf miss">Nahi mila · Not found</span>';
+}
+function renderExtractResults() {
+  const tb = document.getElementById("extract-body");
+  tb.innerHTML = state.fields.map(f => {
+    let val = f.value;
+    if (f.status === "missing") val = "— nahi mila —";
+    else if (f.status === "unclear") val = esc(f.value) + ' <span style="color:var(--amber); font-weight:700;">(aadha dikha)</span>';
+    else val = esc(f.value);
+    const src = f.sourceEn ? '<span class="src">' + esc(f.sourceHi) + " · " + esc(f.sourceEn) + "</span>" : "";
+    return '<tr class="' + (f.status === "found" ? "" : "need") + '">' +
+      "<td class='f-label'>" + esc(f.labelHi) + "<small>" + esc(f.labelEn) + "</small></td>" +
+      "<td class='f-val'>" + val + src + "</td>" +
+      "<td>" + confChip(f) + "</td></tr>";
+  }).join("");
+}
+
+/* ---------- step 3: questions, one by one ---------- */
+function startQuestions() {
+  state.questions = state.fields.filter(f => f.status !== "found" && state.answers[f.key] == null);
+  state.qIndex = 0;
+  if (state.questions.length === 0) { renderPreview(); setStep(4); return; }
+  setStep(3);
+  renderQuestion();
+}
+function renderQuestion() {
+  const field = state.questions[state.qIndex];
+  const q = questionFor(field);
+  state.currentQ = q;
+  document.getElementById("q-progress").textContent =
+    "Sawal " + (state.qIndex + 1) + " / " + state.questions.length +
+    " · Question " + (state.qIndex + 1) + " of " + state.questions.length;
+  document.getElementById("q-title-hi").textContent = q.titleHi;
+  document.getElementById("q-title-en").textContent = q.titleEn;
+  document.getElementById("q-hint").textContent = q.hint;
+  const input = document.getElementById("q-input");
+  input.value = "";
+  input.placeholder = q.inputPlaceholder || "";
+  hideQError();
+  const box = document.getElementById("q-options");
+  box.innerHTML = "";
+  if (q.inputKind === "chips") {
+    q.options.forEach(o => {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "chip"; b.dataset.value = o.value;
+      b.innerHTML = esc(o.hi) + "<small>" + esc(o.en) + "</small>";
+      b.addEventListener("click", () => selectChip(o.value));
+      box.appendChild(b);
+    });
+  }
+  input.focus();
+}
+function selectChip(value) {
+  document.getElementById("q-input").value = value;
+  document.querySelectorAll("#q-options .chip").forEach(c => c.classList.toggle("sel", c.dataset.value === value));
+  hideQError();
+}
+function showQError(msg) {
+  const e = document.getElementById("q-error");
+  e.textContent = msg; e.classList.add("on");
+}
+function hideQError() { document.getElementById("q-error").classList.remove("on"); }
+function submitAnswer() {
+  const field = state.questions[state.qIndex];
+  const q = state.currentQ;
+  const raw = document.getElementById("q-input").value;
+  const err = q.validate(raw);
+  if (err) { showQError(err); return; }
+  state.answers[field.key] = field.key === "bankIfsc" ? raw.trim().toUpperCase() : raw.trim();
+  state.qIndex++;
+  if (state.qIndex < state.questions.length) renderQuestion();
+  else { renderPreview(); setStep(4); }
+}
+
+/* ---------- voice answer (Hindi), if the browser supports it ---------- */
+let recog = null;
+function setupMic() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const btn = document.getElementById("btn-mic");
+  if (!SR || !btn) return;
+  btn.classList.add("show");
+  recog = new SR();
+  recog.lang = "hi-IN"; recog.interimResults = false; recog.maxAlternatives = 1;
+  const reset = () => { btn.classList.remove("listening"); btn.textContent = "🎤 Bol kar batao"; };
+  recog.onresult = e => { handleSpoken(e.results[0][0].transcript || ""); reset(); };
+  recog.onend = reset; recog.onerror = reset;
+  btn.addEventListener("click", () => {
+    try { btn.classList.add("listening"); btn.textContent = "🔴 Sun raha hai… bolo"; recog.start(); } catch (err) { reset(); }
+  });
+}
+function handleSpoken(text) {
+  const field = state.questions[state.qIndex];
+  if (!field || !text) return;
+  const q = state.currentQ;
+  const input = document.getElementById("q-input");
+  if (q && q.inputKind === "chips") {
+    const t = text.toUpperCase();
+    const opt = q.options.find(o => t.includes(o.value.toUpperCase()));
+    if (opt) { selectChip(opt.value); return; }
+  }
+  if (field.key === "bankIfsc") input.value = text.replace(/\s+/g, "").toUpperCase();
+  else input.value = text;
+}
+
+/* ---------- step 4: preview with edit ---------- */
+function fieldRow(field, editable) {
+  const label = "<div class='p-label'>" + esc(field.labelHi) + "<small>" + esc(field.labelEn) + "</small></div>";
+  if (editable && state.editingKey === field.key) {
+    return "<div class='prow'>" + label +
+      "<div class='p-val'><input id='edit-input' type='text' value='" + esc(finalValue(field) || "") + "'></div>" +
+      "<button class='save-btn' data-save='" + field.key + "'>Save · Rakho</button></div>";
+  }
+  const src = sourceText(field);
+  const val = "<div class='p-val'>" + esc(finalValue(field) || "—") + (src ? "<span class='src'>" + esc(src) + "</span>" : "") + "</div>";
+  const btn = editable ? "<button class='edit-btn' data-edit='" + field.key + "'>✎ Badlo · Edit</button>" : "";
+  return "<div class='prow'>" + label + val + btn + "</div>";
+}
+function renderPreview() {
+  document.getElementById("preview-form").innerHTML = state.fields.map(f => fieldRow(f, true)).join("");
+}
+function renderSummary() {
+  document.getElementById("summary-form").innerHTML = state.fields.map(f => fieldRow(f, false)).join("");
+}
+
+/* ---------- wiring ---------- */
+function initApp() {
+  document.querySelectorAll("[data-add-sample]").forEach(b =>
+    b.addEventListener("click", () => markAdded(b.dataset.addSample, "sample")));
+  document.querySelectorAll("[data-upload]").forEach(inp =>
+    inp.addEventListener("change", () => {
+      const file = inp.files && inp.files[0];
+      if (!file) return;
+      const id = inp.dataset.upload;
+      const img = document.querySelector("#doc-" + id + " .own-photo img");
+      img.src = URL.createObjectURL(file);
+      markAdded(id, "own");
+    }));
+  document.getElementById("btn-to-reading").addEventListener("click", startReading);
+  document.getElementById("btn-to-questions").addEventListener("click", startQuestions);
+  document.getElementById("btn-q-next").addEventListener("click", submitAnswer);
+  document.getElementById("q-input").addEventListener("keydown", e => { if (e.key === "Enter") submitAnswer(); });
+  document.getElementById("preview-form").addEventListener("click", e => {
+    const editBtn = e.target.closest("[data-edit]");
+    const saveBtn = e.target.closest("[data-save]");
+    if (editBtn) {
+      state.editingKey = editBtn.dataset.edit;
+      renderPreview();
+      const inp = document.getElementById("edit-input");
+      if (inp) { inp.focus(); inp.select(); }
+    } else if (saveBtn) {
+      const inp = document.getElementById("edit-input");
+      const v = inp ? inp.value.trim() : "";
+      if (v) state.edits[saveBtn.dataset.save] = v;
+      state.editingKey = null;
+      renderPreview();
+    }
+  });
+  document.getElementById("btn-to-gate").addEventListener("click", () => setStep(5));
+  document.getElementById("btn-back-fix").addEventListener("click", () => { renderPreview(); setStep(4); });
+  document.getElementById("btn-approve").addEventListener("click", () => { renderSummary(); setStep(6); });
+  document.getElementById("btn-print").addEventListener("click", () => window.print());
+  document.getElementById("btn-restart").addEventListener("click", () => location.reload());
+  setupMic();
+  setStep(1);
+}
+if (typeof document !== "undefined" && document.getElementById("app")) initApp();
+</script>
+</body>
+</html>
