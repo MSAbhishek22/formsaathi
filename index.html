@@ -185,6 +185,14 @@
     .wrap{padding:0;}
   }
 </style>
+<style>
+.hero3d-wrap{position:relative;height:340px;min-height:260px;overflow:hidden;background:#0b1020;border-radius:18px;margin:18px auto;max-width:1100px}
+.hero3d-wrap canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hero3d-cap{position:absolute;left:18px;bottom:36px;margin:0;color:#fff;font:600 14px/1.4 system-ui,-apple-system,sans-serif;text-shadow:0 1px 8px rgba(0,0,0,.65);z-index:2}
+.hero3d-cue{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);margin:0;color:rgba(255,255,255,.92);font:600 13px/1.4 system-ui,-apple-system,sans-serif;letter-spacing:.08em;text-transform:uppercase;z-index:2;animation:hero3dbob 2s ease-in-out infinite}
+@keyframes hero3dbob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,4px)}}
+@media(max-width:640px){.hero3d-wrap{height:280px;margin:12px}}
+</style>
 </head>
 <body>
 
@@ -192,6 +200,66 @@
   <h1>FormSaathi <span class="hi">· फ़ॉर्म साथी</span></h1>
   <p>Kagaz ki photo do, form hum bhar denge.<br>Give photos of your documents — we fill the form for you.</p>
 </header>
+<section class="hero3d-wrap" aria-label="3D scene — Your papers, floating into place — kagaz se form, 3D mein.">
+  <canvas id="hero3d" aria-hidden="true"></canvas>
+  <p class="hero3d-cap">Your papers, floating into place — kagaz se form, 3D mein.</p>
+  <p class="hero3d-cue">&#8595; Scroll to explore</p>
+</section>
+<script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
+<script>
+/* J8 hero 3D — auto-starts on first load, no click needed. Three.js r149 CDN
+   with unpkg fallback. Pauses off-screen; renders one static frame when the
+   user prefers reduced motion. */
+(function(){
+  var canvas = document.getElementById('hero3d'); if(!canvas) return;
+  function start(){
+    if(!window.THREE){
+      var s = document.createElement('script');
+      s.src = 'https://unpkg.com/three@0.149.0/build/three.min.js';
+      s.onload = start; document.head.appendChild(s); return;
+    }
+    var THREE = window.THREE;
+    var wrap = canvas.parentElement;
+    var renderer = new THREE.WebGLRenderer({canvas: canvas, antialias: true});
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    var scene = new THREE.Scene(); scene.background = new THREE.Color(0x232946);
+    var camera = new THREE.PerspectiveCamera(45, 2, 0.1, 100);
+    camera.position.set(0, 0.6, 9);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+    var dl = new THREE.DirectionalLight(0xffffff, 0.9); dl.position.set(4, 6, 6); scene.add(dl);
+    var dl2 = new THREE.DirectionalLight(0xffffff, 0.35); dl2.position.set(-5, -2, 4); scene.add(dl2);
+    var papers = [];
+    for(var i=0;i<6;i++){
+      var m = new THREE.Mesh(new THREE.PlaneGeometry(2.1, 2.9),
+        new THREE.MeshStandardMaterial({color: 0xfff6e0, side: THREE.DoubleSide, roughness: 0.85}));
+      m.position.set((i-2.5)*1.15, Math.sin(i*1.7)*0.35, -i*0.12);
+      m.rotation.set(-0.12, (i-2.5)*0.22, (i%2? 1:-1)*0.08);
+      m.userData.baseY = m.position.y; m.userData.ph = i*1.1;
+      scene.add(m); papers.push(m);
+    }
+    var ring = new THREE.Mesh(new THREE.TorusGeometry(3.6, 0.05, 12, 80),
+      new THREE.MeshStandardMaterial({color: 0xe9a13b, roughness: 0.4, metalness: 0.4}));
+    ring.position.z = -1.2; scene.add(ring);
+
+    var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var visible = true;
+    function size(){ var w=wrap.clientWidth, h=wrap.clientHeight; if(!w||!h) return;
+      renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
+    size(); window.addEventListener('resize', size);
+    if('IntersectionObserver' in window){
+      new IntersectionObserver(function(en){ visible = en[0].isIntersecting; }, {threshold: 0}).observe(wrap);
+    }
+    var clock = new THREE.Clock();
+    function tick(t){ papers.forEach(function(p, i){ p.position.y = p.userData.baseY + Math.sin(t*0.7 + p.userData.ph)*0.18; });
+    ring.rotation.z = t*0.15; }
+    function frame(){ requestAnimationFrame(frame); if(!visible) return; tick(clock.getElapsedTime()); renderer.render(scene, camera); }
+    if(reduced){ tick(0.6); renderer.render(scene, camera); } else { frame(); }
+  }
+  if(document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', start); }
+  else { start(); }
+})();
+</script>
+
 <div class="demo-strip">DEMO — Ye sirf dikhane ke liye hai. Koi bhi form asal me kahin bheja nahi jata. · This is a demo. Nothing is really sent anywhere.</div>
 
 <div class="wrap" id="app">
